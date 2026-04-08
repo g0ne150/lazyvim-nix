@@ -60,7 +60,7 @@ let
 
   # Patterns to find in the starter config
   # These must match EXACTLY what's in the upstream starter (2-space indentation)
-  upstreamSpecPattern = "  spec = {\n    -- add LazyVim and import its plugins\n    { \"LazyVim/LazyVim\", import = \"lazyvim.plugins\" },\n    -- import/override with your plugins\n    { import = \"plugins\" },\n  },";
+  upstreamSpecPattern = "  spec = {\n    -- add LazyVim and import its plugins\n    { \"g0ne150/LazyVim\", import = \"lazyvim.plugins\" },\n    -- import/override with your plugins\n    { import = \"plugins\" },\n  },";
 
   upstreamCheckerPattern = "  checker = {\n    enabled = true, -- check for plugin updates periodically\n    notify = false, -- notify on update\n  }, -- automatically check for plugin updates";
 
