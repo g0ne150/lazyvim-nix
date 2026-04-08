@@ -10,7 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMP_DIR=$(mktemp -d)
-LAZYVIM_REPO="https://github.com/LazyVim/LazyVim.git"
+LAZYVIM_REPO="https://github.com/g0ne150/LazyVim.git"
 
 CACHE_DIR="$REPO_ROOT/tmp/update-cache"
 LAZYVIM_CACHE="$CACHE_DIR/LazyVim"

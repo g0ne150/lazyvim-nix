@@ -134,8 +134,8 @@
       }
     },
     {
-      "name": "LazyVim/LazyVim",
-      "owner": "LazyVim",
+      "name": "g0ne150/LazyVim",
+      "owner": "g0ne150",
       "repo": "LazyVim",
       "loadOrder": 7,
       "dependencies": {
@@ -145,7 +145,7 @@
       "lazy": false,
       "priority": 10000,
       "version_info": {
-        "commit": "83d90f339defdb109a6ede333865a66ffc7ef6aa",
+        "commit": "37c69eddad8c05e0c3360a842f2be6852b834e8d",
         "lazyvim_version": "*",
         "lazyvim_version_type": "version",
         "sha256": "080ls3ci90hpsa7162zl0nminf842sln5bij7r7dhxnb32pms0r0",

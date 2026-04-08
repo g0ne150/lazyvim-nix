@@ -10,7 +10,7 @@ local function main()
   print("Cloning LazyVim repository...")
   vim.fn.system({
     "git", "clone", "--depth", "1", "--filter=blob:none", "--sparse",
-    "https://github.com/LazyVim/LazyVim", temp_dir .. "/LazyVim"
+    "https://github.com/g0ne150/LazyVim", temp_dir .. "/LazyVim"
   })
 
   vim.fn.system({
