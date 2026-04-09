@@ -9,7 +9,6 @@ let
     ''
   spec = {
     -- [NIX] LazyVim with dev mode for Nix-managed packages
-    -- add LazyVim and import its plugins
     { "g0ne150/LazyVim", import = "lazyvim.plugins", dev = true, pin = true },
     -- [NIX] LazyVim extras
     ${lib.concatStringsSep "\n    " extrasImportSpecs}
