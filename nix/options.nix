@@ -1,5 +1,5 @@
 # Options definition for LazyVim Nix module
-{ lib }:
+{ lib, dataLib }:
 
 with lib;
 
@@ -64,6 +64,12 @@ with lib;
         - pkgs.vimPlugins.nvim-treesitter-parsers.* (recommended)
         - pkgs.vimPlugins.nvim-treesitter.grammarPlugins.*
         - pkgs.vimPlugins.nvim-treesitter.allGrammars (for all 324 parsers)
+
+      The package values are used to identify parser languages. When
+      programs.lazyvim.pluginSource = "latest", lazyvim-nix builds the actual
+      parser artifacts from data/parser-manifest.json so they stay aligned with
+      LazyVim's pinned nvim-treesitter queries. In that mode, manual parser
+      selections must resolve to languages that exist in the generated manifest.
 
       DEPRECATED: pkgs.tree-sitter-grammars is no longer supported.
       It has fewer grammars (131 vs 324) and may have compatibility issues.
@@ -160,11 +166,10 @@ with lib;
     '';
   };
 
-  extras = mkOption {
-    type = types.attrsOf (types.attrsOf (types.submodule {
-      options = {
+  extras = 
+    let
+      extraBaseOptions = {
         enable = mkEnableOption "this LazyVim extra";
-
         installDependencies = mkOption {
           type = types.bool;
           default = false;
@@ -175,7 +180,6 @@ with lib;
             When false (default), tools must be provided via extraPackages.
           '';
         };
-
         installRuntimeDependencies = mkOption {
           type = types.bool;
           default = false;
@@ -187,7 +191,6 @@ with lib;
             or provided via extraPackages.
           '';
         };
-
         config = mkOption {
           type = types.str;
           default = "";
@@ -197,59 +200,104 @@ with lib;
           '';
         };
       };
-    }));
-    default = {};
-    example = literalExpression ''
-      {
-        coding.yanky = {
-          enable = true;
-          config = '''
-            return {
-              "gbprod/yanky.nvim",
-              opts = {
-                highlight = { timer = 300 },
-              },
-            }
-          ''';
-        };
 
-        lang.python = {
-          enable = true;
-          installDependencies = true;        # Install ruff
-          installRuntimeDependencies = true; # Install python3, pip
-        };
+      mkCategoryOptions = categoryExtras:
+        let
+          nixifyName = replaceStrings ["_"] ["-"];
 
-        lang.go = {
-          enable = true;
-          installDependencies = true;        # Install gopls, gofumpt, etc.
-          installRuntimeDependencies = true; # Install go compiler
-        };
+          parents = filterAttrs (_: v: !(v.is_nested or false)) categoryExtras;
+          nested  = filterAttrs (_: v:   v.is_nested or false)  categoryExtras;
 
-        lang.nix = {
-          enable = true;
-          config = '''
-            return {
-              "neovim/nvim-lspconfig",
-              opts = {
-                servers = {
-                  nixd = {},
-                },
-              },
-            }
-          ''';
-        };
+          childrenOf = parentName:
+            filterAttrs (n: _: hasPrefix "${parentName}." n) nested;
 
-        editor.dial.enable = true;
-      }
-    '';
-    description = ''
-      LazyVim extras to enable. Extras provide additional plugins and configurations
-      for specific languages, features, or tools.
+          mkExtraSubmodule = name: _meta:
+            let
+              children = childrenOf name;
+              childOpts = mapAttrs' (qualifiedName: _:
+                let
+                  shortName = removePrefix "${name}." qualifiedName;
+                in nameValuePair (nixifyName shortName) (mkOption {
+                  type    = types.submodule { options = extraBaseOptions; };
+                  default = {};
+                  description = "Nested extra: ${qualifiedName}";
+                })
+              ) children;
+            in mkOption {
+              type    = types.submodule { options = extraBaseOptions // childOpts; };
+              default = {};
+              description = "LazyVim extra: ${name}";
+            };
+        in
+          mapAttrs' (jsonKey: meta:
+            nameValuePair (nixifyName jsonKey) (mkExtraSubmodule jsonKey meta)
+          ) parents;
 
-      Each extra can be enabled with `enable = true` and optionally configured with
-      complete lazy.nvim plugin specifications in the `config` field.
-    '';
-  };
+      # Top-level: one submodule per category
+      generatedExtrasType = types.submodule {
+        options = mapAttrs (categoryName: categoryExtras:
+          mkOption {
+            type    = types.submodule { options = mkCategoryOptions categoryExtras; };
+            default = {};
+            description = "LazyVim ${categoryName} extras.";
+          }
+        ) dataLib.extrasMetadata;
+      };
+    in
+      mkOption {
+        type = generatedExtrasType;
+        default = {};
+        example = literalExpression ''
+          {
+            coding.yanky = {
+              enable = true;
+              config = '''
+                return {
+                  "gbprod/yanky.nvim",
+                  opts = {
+                    highlight = { timer = 300 },
+                  },
+                }
+              ''';
+            };
+
+            lang.python = {
+              enable = true;
+              installDependencies = true;        # Install ruff
+              installRuntimeDependencies = true; # Install python3, pip
+            };
+
+            lang.go = {
+              enable = true;
+              installDependencies = true;        # Install gopls, gofumpt, etc.
+              installRuntimeDependencies = true; # Install go compiler
+            };
+
+            lang.nix = {
+              enable = true;
+              config = '''
+                return {
+                  "neovim/nvim-lspconfig",
+                  opts = {
+                    servers = {
+                      nixd = {},
+                    },
+                  },
+                }
+              ''';
+            };
+
+            editor.dial.enable = true;
+          }
+        '';
+        description = ''
+          LazyVim extras to enable. Extras provide additional plugins and configurations
+          for specific languages, features, or tools.
+
+          Each extra can be enabled with `enable = true` and optionally configured with
+          complete lazy.nvim plugin specifications in the `config` field.
+        '';
+    };
 
   ignoreBuildNotifications = mkOption {
     type = types.bool;
