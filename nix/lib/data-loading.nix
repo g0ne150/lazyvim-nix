@@ -38,9 +38,9 @@
     in
       # Prefer grammarName (from grammarPlugins / nvim-treesitter-parsers)
       if grammarName != null then grammarName
-      # Accept language only if it's from nvim-treesitter (has associatedQuery)
-      else if language != null && hasAssociatedQuery then language
-      # Detect deprecated tree-sitter-grammars (has language but no associatedQuery)
+      # Accept language from nvim-treesitter (has associatedQuery) or custom grammars
+      else if language != null && !isTreeSitterGrammar then language
+      # Reject deprecated pkgs.tree-sitter-grammars
       else if language != null && isTreeSitterGrammar then
         throw ''
           Deprecated treesitter package detected: ${pname}
