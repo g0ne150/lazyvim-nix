@@ -17,8 +17,15 @@ let
     inherit lib pkgs;
     pluginMappings = dataLib.pluginMappings;
   };
+  # Custom parser packages provided by the user via treesitterParsers.
+  # These are used as fallbacks when a parser is not in the generated
+  # parser-manifest.json (e.g. kulala_http from kulala.nvim).
+  customParserPackages = lib.listToAttrs (
+    map (pkg: lib.nameValuePair (dataLib.extractLang pkg) pkg) cfg.treesitterParsers
+  );
+
   treesitterLib = import ./lib/treesitter.nix {
-    inherit lib pkgs;
+    inherit lib pkgs customParserPackages;
     treesitterMappings = dataLib.treesitterMappings;
     extractLang = dataLib.extractLang;
     ignoreBuildNotifications = cfg.ignoreBuildNotifications;

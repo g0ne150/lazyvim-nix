@@ -5,6 +5,7 @@
   treesitterMappings,
   extractLang,
   ignoreBuildNotifications ? false,
+  customParserPackages ? { },
 }:
 
 let
@@ -46,23 +47,32 @@ let
     in
     go [ ] parserNames;
 
+  # Wrap a custom parser package (from pkgs.tree-sitter.buildGrammar) into the
+  # same format that buildParserFromSource produces for symlinkJoin.
+  wrapCustomParser =
+    parserName: pkg:
+    pkgs.runCommand "treesitter-grammar-${parserName}"
+      {
+        passthru = {
+          grammar = pkg;
+          grammarName = parserName;
+        };
+      }
+      ''
+        mkdir -p $out/parser
+        # buildGrammar outputs the parser binary at ${pkg}/parser (a single file)
+        ln -s ${pkg}/parser $out/parser/${parserName}.so
+      '';
+
   # Build a single parser from source using tree-sitter.buildGrammar
   buildParserFromSource =
     parserName:
     let
       spec = parserManifest.parsers.${parserName} or null;
+      customPkg = customParserPackages.${parserName} or null;
     in
-    if spec == null then
-      throw ''
-        treesitter parser '${parserName}' is not available in lazyvim-nix's generated parser manifest.
-
-        programs.lazyvim.pluginSource = "latest" requires parser/query coherence and only builds parsers
-        from the pinned nvim-treesitter source recorded in data/parser-manifest.json.
-
-        Regenerate the manifest with scripts/update-plugins.sh or switch to programs.lazyvim.pluginSource = "nixpkgs"
-        if you explicitly want nixpkgs parser packages instead.
-      ''
-    else
+    if spec != null then
+      # Manifest-backed parser takes precedence for version alignment
       let
         # Build the grammar from source
         revShort = builtins.substring 0 7 spec.revision;
@@ -113,7 +123,20 @@ let
               ln -s ${grammar}/parser $out/parser/${parserName}.so
             '';
       in
-      vimPlugin;
+      vimPlugin
+    else if customPkg != null then
+      # Fall back to user-provided custom parser package
+      wrapCustomParser parserName customPkg
+    else
+      throw ''
+        treesitter parser '${parserName}' is not available in lazyvim-nix's generated parser manifest.
+
+        programs.lazyvim.pluginSource = "latest" requires parser/query coherence and only builds parsers
+        from the pinned nvim-treesitter source recorded in data/parser-manifest.json.
+
+        Regenerate the manifest with scripts/update-plugins.sh or switch to programs.lazyvim.pluginSource = "nixpkgs"
+        if you explicitly want nixpkgs parser packages instead.
+      '';
 
 in
 {
@@ -172,7 +195,9 @@ in
     let
       parserNames = automaticTreesitterParsers;
       missingParsers = lib.filter (
-        parserName: !(builtins.hasAttr parserName parserManifest.parsers)
+        parserName:
+        !(builtins.hasAttr parserName parserManifest.parsers)
+        && !(builtins.hasAttr parserName customParserPackages)
       ) parserNames;
 
       _ =
