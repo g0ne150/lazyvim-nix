@@ -292,10 +292,12 @@
     ],
     "lang.java": [
       {
-        "name": "java-debug-adapter"
+        "name": "java-debug-adapter",
+        "nixpkg": "vscode-extensions.vscjava.vscode-java-debug"
       },
       {
-        "name": "java-test"
+        "name": "java-test",
+        "nixpkg": "vscode-extensions.vscjava.vscode-java-test"
       }
     ],
     "lang.json": [

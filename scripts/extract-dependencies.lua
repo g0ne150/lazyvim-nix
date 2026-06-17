@@ -442,6 +442,8 @@ local function resolve_package_name(dep_name)
 
         -- Debug adapters
         codelldb = "vscode-extensions.vadimcn.vscode-lldb",
+        ["java-debug-adapter"] = "vscode-extensions.vscjava.vscode-java-debug",
+        ["java-test"] = "vscode-extensions.vscjava.vscode-java-test",
 
         -- Runtime packages
         nodejs = "nodejs",
