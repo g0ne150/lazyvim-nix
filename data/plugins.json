@@ -145,10 +145,10 @@
       "lazy": false,
       "priority": 10000,
       "version_info": {
-        "commit": "8796dfc84084f66ae2bcdcdd4b19404401fdb856",
+        "commit": "4704619133b4a8e6cfe124b1e6d1988a3cb4f363",
         "lazyvim_version": "*",
         "lazyvim_version_type": "version",
-        "sha256": "16vrk2vq93miyqxmv91km26nig7inih580n5a5fh3170cxmm8s0x",
+        "sha256": "07q9p7nd5nripbakrn5nc5f0mpy34md7k1pag48nvwxdrr269vdf",
         "fetched_at": "2026-04-02T17:28:07Z"
       }
     },
