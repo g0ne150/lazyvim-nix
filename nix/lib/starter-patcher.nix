@@ -9,7 +9,8 @@ let
     ''
   spec = {
     -- [NIX] LazyVim with dev mode for Nix-managed packages
-    { "g0ne150/LazyVim", import = "lazyvim.plugins", dev = true, pin = true },
+    { "g0ne150/LazyVim", import = "lazyvim.plugins", dev = true, pin = true, },
+    -- { "g0ne150/LazyVim", import = "lazyvim.plugins", dir = "/home/zapan/myspace/neovim/LazyVim", pin = true, },
     -- [NIX] LazyVim extras
     ${lib.concatStringsSep "\n    " extrasImportSpecs}
     -- [NIX] Mason disabled - Nix provides tools via extraPackages

@@ -145,7 +145,7 @@
       "lazy": false,
       "priority": 10000,
       "version_info": {
-        "commit": "37c69eddad8c05e0c3360a842f2be6852b834e8d",
+        "commit": "8796dfc84084f66ae2bcdcdd4b19404401fdb856",
         "lazyvim_version": "*",
         "lazyvim_version_type": "version",
         "sha256": "08lwq9hpiz7hd7jmqv6nqwmj0rblrk358255l1sr215r4wrrnji9",
