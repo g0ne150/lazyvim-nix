@@ -76,6 +76,12 @@ jobs:
           echo "Current starter: $CURRENT_STARTER"
           echo "Latest starter: $LATEST_STARTER"
 
+          if [ "$CURRENT_STARTER" != "$LATEST_STARTER" ]; then
+            echo "starter_updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "starter_updated=false" >> $GITHUB_OUTPUT
+          fi
+
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ] || [ "$CURRENT_STARTER" != "$LATEST_STARTER" ]; then
             echo "update_needed=true" >> $GITHUB_OUTPUT
             echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
@@ -139,7 +145,9 @@ jobs:
         if: steps.check-updates.outputs.update_needed == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # A PAT is required so the created PR triggers CI workflows;
+          # PRs created with GITHUB_TOKEN never run required checks.
+          token: ${{ secrets.PR_TOKEN || secrets.GITHUB_TOKEN }}
           commit-message: "chore: update LazyVim plugins to ${{ steps.check-updates.outputs.latest_version }}"
           title: "Update LazyVim plugins to ${{ steps.check-updates.outputs.latest_version }}"
           body: |
@@ -148,7 +156,7 @@ jobs:
             ## Changes
             - Updated `data/plugins.json` with latest LazyVim plugin list
             - Updated `data/extras.json` with latest LazyVim extras metadata
-            - Updated `data/starter-lazy.lua` with latest LazyVim starter config
+            ${{ steps.check-updates.outputs.starter_updated == 'true' && '- Updated `data/starter-lazy.lua` with latest LazyVim starter config' || '' }}
             - LazyVim version: ${{ steps.check-updates.outputs.latest_version }}
             - Starter commit: ${{ steps.check-updates.outputs.latest_starter }}
             ${{ steps.update-plugins.outputs.has_verified_mappings == 'true' && '- Added new verified plugin mappings to `data/mappings.json`' || '' }}
@@ -174,7 +182,6 @@ jobs:
             data/mappings.json
             data/extras.json
             data/dependencies.json
-            data/dependencies-verification-report.json
             data/mapping-analysis-report.md
             data/starter-lazy.lua
             data/starter-version.txt

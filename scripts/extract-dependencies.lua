@@ -35,14 +35,14 @@ local EXCLUDED_IDENTIFIERS = {
 
     -- Configuration keys and internal identifiers
     "FileType", "RUFF_TRACE", "arguments", "before_init", "buf_name", "capabilities", "chrome",
-    "cmd_env", "codelenses", "command", "completionmode", "copilot", "count", "desc", "diagnostics",
+    "cmd", "cmd_env", "codelenses", "command", "completionmode", "copilot", "count", "desc", "diagnostics",
     "diff", "dynamicRegistration", "ember", "enabled", "file_name", "filter", "filetypes", "filetypes_exclude",
-    "foldingRange", "gc_details", "generate", "git_config", "git_rebase", "gitattributes", "gitcommit",
+    "fixKind", "foldingRange", "gc_details", "generate", "git_config", "git_rebase", "gitattributes", "gitcommit",
     "gitignore", "glimmer", "glimmer_javascript", "glimmer_typescript", "gomod", "gosum", "gowork",
-    "http", "keys", "lineFoldingOnly", "lint", "lsp", "missingrefs", "mode", "msedge", "node",
-    "null-ls", "nvimtools/none-ls.nvim", "params", "printf", "regenerate_cgo", "root_markers",
-    "run_govulncheck", "schemas", "settings", "silent", "test", "textDocument", "tidy", "title",
-    "upgrade_dependency", "vendor", "workingDirectories", "bibtex"
+    "http", "init_options", "keys", "lineFoldingOnly", "lint", "lsp", "markers", "missingrefs", "mode",
+    "msedge", "node", "null-ls", "nvimtools/none-ls.nvim", "params", "printf", "regenerate_cgo", "root_dir",
+    "root_markers", "run_govulncheck", "schemas", "semanticTokens", "settings", "silent", "test",
+    "textDocument", "tidy", "title", "upgrade_dependency", "vendor", "workingDirectories", "bibtex"
 }
 
 -- Create lookup table for faster exclusion checks
@@ -444,6 +444,15 @@ local function resolve_package_name(dep_name)
         codelldb = "vscode-extensions.vadimcn.vscode-lldb",
         ["java-debug-adapter"] = "vscode-extensions.vscjava.vscode-java-debug",
         ["java-test"] = "vscode-extensions.vscjava.vscode-java-test",
+
+        -- .NET tools
+        fsautocomplete = "fsautocomplete",
+        csharpier = "csharpier",
+        netcoredbg = "netcoredbg",
+        fantomas = "fantomas",
+
+        -- CSS tools
+        tailwindcss = "tailwindcss",
 
         -- Runtime packages
         nodejs = "nodejs",

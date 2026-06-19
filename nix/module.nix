@@ -10,12 +10,12 @@ let
   dataLib = import ./lib/data-loading.nix { inherit lib pkgs; };
   pluginLib = import ./lib/plugin-resolution.nix {
     inherit lib pkgs;
-    pluginMappings = dataLib.pluginMappings;
-    ignoreBuildNotifications = cfg.ignoreBuildNotifications;
+    inherit (dataLib) pluginMappings;
+    inherit (cfg) ignoreBuildNotifications;
   };
   devPathLib = import ./lib/dev-path.nix {
     inherit lib pkgs;
-    pluginMappings = dataLib.pluginMappings;
+    inherit (dataLib) pluginMappings;
   };
   # Custom parser packages provided by the user via treesitterParsers.
   # These are used as fallbacks when a parser is not in the generated
@@ -26,17 +26,17 @@ let
 
   treesitterLib = import ./lib/treesitter.nix {
     inherit lib pkgs customParserPackages;
-    treesitterMappings = dataLib.treesitterMappings;
-    extractLang = dataLib.extractLang;
-    ignoreBuildNotifications = cfg.ignoreBuildNotifications;
+    inherit (dataLib) treesitterMappings;
+    inherit (dataLib) extractLang;
+    inherit (cfg) ignoreBuildNotifications;
   };
   dependenciesLib = import ./lib/dependencies.nix {
     inherit lib pkgs;
-    dependencies = dataLib.dependencies;
-    ignoreBuildNotifications = cfg.ignoreBuildNotifications;
+    inherit (dataLib) dependencies;
+    inherit (cfg) ignoreBuildNotifications;
   };
   configLib = import ./lib/config-generation.nix { inherit lib; };
-  fileLib = import ./lib/file-scanning.nix { inherit lib pkgs config; };
+  fileLib = import ./lib/file-scanning.nix { inherit lib; };
 
   # Helper function to collect enabled extras
   getEnabledExtras = extrasConfig:
@@ -199,8 +199,8 @@ let
 
   # Generate lazy.nvim configuration by patching the official LazyVim starter
   lazyConfig = configLib.lazyConfig {
-    starterLua = dataLib.starterLua;
-    starterVersion = dataLib.starterVersion;
+    inherit (dataLib) starterLua;
+    inherit (dataLib) starterVersion;
     inherit devPath extrasImportSpecs availableDevSpecs;
   };
 
@@ -212,7 +212,6 @@ let
 
   # Detect conflicts and ensure no conflicts exist
   conflictChecks = fileLib.detectConflicts cfg scannedFiles;
-  _ = if cfg.enable then conflictChecks else null;
 
 in {
   # Import module options
@@ -329,21 +328,50 @@ in {
           };
         }
     )
-    # Disable LazyVim's treesitter healthcheck - Nix provides pre-built parsers
+    # Disable LazyVim's runtime treesitter installer - Nix provides pre-built parsers
     // {
-      "${cfg.appName}/lua/plugins/_lazyvim_nix_healthcheck.lua" = {
+      "${cfg.appName}/lua/plugins/_lazyvim_nix_treesitter.lua" = {
         text = ''
-          -- [NIX] Disable treesitter healthcheck - parsers are pre-built by Nix
-          -- LazyVim's healthcheck expects tree-sitter CLI and C compiler which aren't needed
+          -- [NIX] Treesitter parsers are pre-built by Nix and linked into
+          -- stdpath("data")/site. LazyVim's runtime installer needs the
+          -- tree-sitter CLI and a C compiler, and would try to write into the
+          -- read-only parser directory, so replace it with a clear message.
+          --
+          -- LazyDone fires before any LazyFile/VeryLazy plugin loads, so the
+          -- overrides are in place before LazyVim's treesitter config runs.
           vim.api.nvim_create_autocmd("User", {
-            pattern = "VeryLazy",
+            pattern = "LazyDone",
             once = true,
             callback = function()
               local ok, ts = pcall(require, "lazyvim.util.treesitter")
-              if ok and ts then
-                ts.check = function()
-                  return true, { ["nix"] = true }
+              if not ok or not ts then
+                return
+              end
+              -- Healthcheck: parsers come from Nix, so requirements are met
+              ts.check = function()
+                return true, { ["nix"] = true }
+              end
+              -- Called by LazyVim when ensure_installed parsers are missing
+              ts.build = function()
+                local plugin = require("lazy.core.config").plugins["nvim-treesitter"]
+                local opts = plugin and require("lazy.core.plugin").values(plugin, "opts", false) or {}
+                local missing = vim.tbl_filter(function(lang)
+                  return not ts.have(lang)
+                end, opts.ensure_installed or {})
+                if #missing == 0 then
+                  return
                 end
+                vim.notify(
+                  table.concat({
+                    "Treesitter parsers are managed by Nix; runtime installation is disabled.",
+                    "",
+                    "Missing parsers: `" .. table.concat(missing, "`, `") .. "`",
+                    "",
+                    "Add them to `programs.lazyvim.treesitterParsers` or enable the corresponding extra.",
+                  }, "\n"),
+                  vim.log.levels.WARN,
+                  { title = "lazyvim-nix" }
+                )
               end
             end,
           })
